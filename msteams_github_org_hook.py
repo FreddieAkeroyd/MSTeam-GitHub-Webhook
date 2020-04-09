@@ -41,6 +41,7 @@ def add_body(teams_message, event_type, req_data):
         teams_message: MS Teams message object
         event_type: GutHub event type
         req_data: dictionary of event json payload
+    Returns: whether to send message.
     """
     ## note: you need \n\n for a newline in MS Teams markdown
     desc_fmt = event_type
@@ -91,6 +92,11 @@ def add_body(teams_message, event_type, req_data):
 def build_and_send(event_type, req_body, webhook_url, test=False):
     """
     build and send message to teams.
+    Args:
+        event_type: GutHub event type
+        req_data: dictionary of event json payload
+        webhook_url: MS Teams incoming webhook connector URL
+        test: whether we are in test mode
     """
     req_data = json.loads(req_body)
     teams_message = pymsteams.connectorcard(webhook_url)
