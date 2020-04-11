@@ -6,11 +6,12 @@ Take a git webhook as input and post a message to MS Teams
 import json
 import os
 import sys
+from github import Github, ProjectCard, ProjectColumn, Consts
 
 import pymsteams
 
-## local module to define WEBHOOK_URL string for teams incoming webhook connector
-from local_defs import WEBHOOK_URL
+## local module to define DEFAULT_URL string for teams incoming webhook connector
+from local_defs import DEFAULT_URL, PROJECTS_URL, GITHUB_TOKEN
 
 def escape_markdown(a_string):
     """
@@ -54,7 +55,7 @@ def add_body(teams_message, event_type, req_data):
     if event_type == "issue_comment":
         desc_fmt = ("{sender[login]} commented on issue #{issue[number]} "
                     "in {repository[full_name]}\n\n"
-                    " Title: {issue[title]}\n\n{comment[body]}")
+                    "Title: {issue[title]}\n\n{comment[body]}")
         teams_message.addLinkButton("Issue", "{issue[html_url]}".format(**req_data))
         teams_message.addLinkButton("Comment", "{comment[html_url]}".format(**req_data))
     if event_type == "issues":
@@ -65,13 +66,28 @@ def add_body(teams_message, event_type, req_data):
         if req_data['action'] not in ['opened', 'reopened', 'closed', 'edited', 'deleted']:
             do_send = False
     if event_type == "project_card":
+        g_h = Github(GITHUB_TOKEN)
+        card_url = req_data['project_card']['url']
+        card = ProjectCard.ProjectCard(g_h._Github__requester, {},
+                                       {"url" : card_url}, completed=False)
+        headers = {"Accept": Consts.mediaTypeProjectsPreview}
+        card.update(headers)
+        issue = card.get_content()
+        column_url = req_data['project_card']['column_url']
+        column = ProjectColumn.ProjectColumn(g_h._Github__requester, {},
+                                             {"url" : column_url}, completed=False)
+        column.update(headers)
         desc_fmt = ("{sender[login]} {action} card note {project_card[note]} "
-                    "in {repository[full_name]}")
+                    "in {repository[full_name]}\n\n"
+                    "Title: " + issue.title + "\n\n"
+                    "Column: " + column.name)
+        teams_message.newhookurl(PROJECTS_URL)
+        teams_message.addLinkButton("Issue", issue.html_url)
     if event_type == "pull_request":
         desc_fmt = ("{sender[login]} {action} pull #{pull_request[number]} "
                     "in {repository[full_name]}\n\n"
                     "Title: {pull_request[title]}\n\n"
-                    "Merge: {pull_request[head][repo][full_name]}:{pull_request[head][ref]}"
+                    "Merge: {pull_request[head][repo][full_name]}:{pull_request[head][ref]} "
                     "into {pull_request[base][repo][full_name]}:{pull_request[base][ref]}")
         teams_message.addLinkButton("Pull Request", "{pull_request[html_url]}".format(**req_data))
         if req_data['action'] not in ['opened', 'reopened', 'closed', 'edited']:
@@ -113,7 +129,7 @@ if __name__ == "__main__":
     CONTENT_LEN = int(os.environ["CONTENT_LENGTH"])
     EVENT_TYPE = os.environ["HTTP_X_GITHUB_EVENT"]
     REQ_BODY = sys.stdin.read(CONTENT_LEN)
-    build_and_send(EVENT_TYPE, REQ_BODY, WEBHOOK_URL)
+    build_and_send(EVENT_TYPE, REQ_BODY, DEFAULT_URL)
 
     print("Content-Type: text/plain")
     print("")
