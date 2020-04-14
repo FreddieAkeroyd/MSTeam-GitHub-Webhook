@@ -6,7 +6,7 @@ Take a git webhook as input and post a message to MS Teams
 import json
 import os
 import sys
-from github import Github, ProjectCard, ProjectColumn, Consts
+from github import Github, Project, ProjectCard, ProjectColumn, Consts
 
 import pymsteams
 
@@ -73,14 +73,19 @@ def add_body(teams_message, event_type, req_data):
         headers = {"Accept": Consts.mediaTypeProjectsPreview}
         card.update(headers)
         issue = card.get_content()
-        column_url = req_data['project_card']['column_url']
+        column_url = card.column_url
         column = ProjectColumn.ProjectColumn(g_h._Github__requester, {},
                                              {"url" : column_url}, completed=False)
         column.update(headers)
-        desc_fmt = ("{sender[login]} {action} card note {project_card[note]} "
+        project_url = column.project_url
+        project = Project.Project(g_h._Github__requester, {},
+                                  {"url" : project_url}, completed=False)
+        project.update(headers)
+        desc_fmt = ("{sender[login]} {action} card (note: {project_card[note]}) "
                     "in {repository[full_name]}\n\n"
-                    "Title: " + issue.title + "\n\n"
-                    "Column: " + column.name)
+                    "Project: " + project.name + "\n\n"
+                    "Column: " + column.name + "\n\n"
+                    "Title: " + issue.title)
         teams_message.newhookurl(PROJECTS_URL)
         teams_message.addLinkButton("Issue", issue.html_url)
     if event_type == "pull_request":
