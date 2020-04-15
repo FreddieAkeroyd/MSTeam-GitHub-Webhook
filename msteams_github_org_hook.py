@@ -56,13 +56,15 @@ def add_body(teams_message, event_type, req_data):
         desc_fmt = ("{sender[login]} commented on issue #{issue[number]} "
                     "in {repository[full_name]}\n\n"
                     "Title: {issue[title]}\n\n{comment[body]}")
-        teams_message.addLinkButton("Issue", "{issue[html_url]}".format(**req_data))
+        teams_message.addLinkButton("Issue #{issue[number]}".format(**req_data),
+                                    "{issue[html_url]}".format(**req_data))
         teams_message.addLinkButton("Comment", "{comment[html_url]}".format(**req_data))
     if event_type == "issues":
         desc_fmt = ("{sender[login]} {action} issue #{issue[number]} "
                     "in {repository[full_name]}\n\nTitle: {issue[title]}\n\n"
                     "--\n\n{issue[body]}")
-        teams_message.addLinkButton("Issue", "{issue[html_url]}".format(**req_data))
+        teams_message.addLinkButton("Issue #{issue[number]}".format(**req_data),
+                                    "{issue[html_url]}".format(**req_data))
         if req_data['action'] not in ['opened', 'reopened', 'closed', 'edited', 'deleted']:
             do_send = False
     if event_type == "project_card":
@@ -87,14 +89,15 @@ def add_body(teams_message, event_type, req_data):
                     "Column: " + column.name + "\n\n"
                     "Title: " + issue.title)
         teams_message.newhookurl(PROJECTS_URL)
-        teams_message.addLinkButton("Issue", issue.html_url)
+        teams_message.addLinkButton("Issue #{}".format(issue.number), issue.html_url)
     if event_type == "pull_request":
         desc_fmt = ("{sender[login]} {action} pull #{pull_request[number]} "
                     "in {repository[full_name]}\n\n"
                     "Title: {pull_request[title]}\n\n"
                     "Merge: {pull_request[head][repo][full_name]}:{pull_request[head][ref]} "
                     "into {pull_request[base][repo][full_name]}:{pull_request[base][ref]}")
-        teams_message.addLinkButton("Pull Request", "{pull_request[html_url]}".format(**req_data))
+        teams_message.addLinkButton("Pull Request #{pull_request[number]}".format(**req_data),
+                                    "{pull_request[html_url]}".format(**req_data))
         if req_data['action'] not in ['opened', 'reopened', 'closed', 'edited']:
             do_send = False
     if event_type == "pull_request_review":
